@@ -34,7 +34,12 @@ def format_benchmark_output(output):
 
 def workflow():
     # Run benchmark tests and capture the output
-    pytest_args = ["--benchmark-only"]
+    pytest_args = [
+        "-m",
+        "string_concatenation",
+        "--benchmark-only",
+        "--benchmark-histogram=results/benchmark_histogram",
+    ]
     buffer = io.StringIO()
     with redirect_stdout(buffer):
         pytest.main(pytest_args)
@@ -43,7 +48,7 @@ def workflow():
     output = buffer.getvalue()
     formatted_output = format_benchmark_output(output)
 
-    with open("benchmark_statistics.md", "w") as f:
+    with open("results/benchmark_statistics.md", "w") as f:
         f.write("# Benchmark Statistics\n\n")
         f.write("## Results from Benchmark Tests\n\n")
         f.write(formatted_output)
