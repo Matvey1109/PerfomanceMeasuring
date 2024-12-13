@@ -3,54 +3,30 @@ from contextlib import redirect_stdout
 
 import pytest
 
+from src.file_writer import FileWriter
+from src.type_of_tests import TypeOfTests
 
-def format_benchmark_output(output):
-    """Format the benchmark output into a more readable Markdown structure."""
-    lines = output.splitlines()
-    formatted = [
-        "| Test Name | Min Time (us) | Max Time (us) | Mean Time (us) | StdDev (us) | Median Time (us) | IQR | OPS | Rounds |"
-    ]
-    formatted.append(
-        "|-----------|---------------|---------------|----------------|-------------|-----------------|-----|-----|-------|"
-    )
-
-    parsing = False
-    for line in lines:
-        if line.startswith("Name (time in us)"):
-            parsing = True
-            continue
-        if parsing and line.strip() == "":
-            parsing = False
-            break
-        if parsing:
-            parts = [p.strip() for p in line.split() if p.strip()]
-            if len(parts) >= 10:
-                formatted.append(
-                    f"| {parts[0]} | {parts[1]} | {parts[2]} | {parts[3]} | {parts[4]} | {parts[5]} | {parts[6]} | {parts[-3]} | {parts[-2]} |"
-                )
-
-    return "\n".join(formatted)
+STATISTICS_FILE_PATH = "results/benchmark_statistics.md"
+HISTOGRAM_FILE_PATH = "results/benchmark_histogram"
 
 
-def workflow():
+def workflow() -> None:
+    print("Program started")
+
     # Run benchmark tests and capture the output
-    pytest_args = [
+    pytest_args: list[str] = [
         "-m",
-        "string_concatenation",
+        TypeOfTests.LIST_CREATION,
         "--benchmark-only",
-        "--benchmark-histogram=results/benchmark_histogram",
+        f"--benchmark-histogram={HISTOGRAM_FILE_PATH}",
     ]
-    buffer = io.StringIO()
+
+    buffer: io.StringIO = io.StringIO()
     with redirect_stdout(buffer):
         pytest.main(pytest_args)
 
     # Save captured benchmark results to a Markdown file
-    output = buffer.getvalue()
-    formatted_output = format_benchmark_output(output)
+    output: str = buffer.getvalue()
+    FileWriter.write_benchmark_output(output, STATISTICS_FILE_PATH)
 
-    with open("results/benchmark_statistics.md", "w") as f:
-        f.write("# Benchmark Statistics\n\n")
-        f.write("## Results from Benchmark Tests\n\n")
-        f.write(formatted_output)
-
-    print("Benchmark results saved to benchmark_statistics.md")
+    print("Benchmark results saved to results/benchmark_statistics.md")
